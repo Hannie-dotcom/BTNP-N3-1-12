@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHINKANZEN - まとめ問題 (1課〜12課)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: linear-gradient(rgba(255, 245, 247, 0.7), rgba(240, 220, 225, 0.8)),
+                        url('https://images.unsplash.com/photo-1522383225653-ed111181a951?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat fixed;
+            min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 12px; overflow-x: hidden;
+        }
+        .sakura-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .petal {
+            position: absolute; background: #ffb7c5; border-radius: 15px 0 15px 0; opacity: 0.75;
+            filter: drop-shadow(0 2px 4px rgba(216, 90, 127, 0.2)); animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translate(0, -10px) rotate(0deg); opacity: 0.8; }
+            100% { transform: translate(80px, 105vh) rotate(360deg); opacity: 0; }
+        }
+        .app-card {
+            position: relative; z-index: 2; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); width: 100%; max-width: 500px; border-radius: 20px; padding: 20px 16px;
+            border: 1.5px solid rgba(255, 255, 255, 0.9); box-shadow: 0 10px 30px rgba(180, 100, 120, 0.15); margin-top: 10px; margin-bottom: 20px;
+        }
+        .main-title {
+            text-align: center; color: #d85a7f; font-size: 20px; font-weight: 700; margin-bottom: 14px;
+            padding-bottom: 8px; border-bottom: 2px dashed #f2d5db;
+        }
+        .header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #b06d7e; margin-bottom: 12px; }
+        .question-card { background: #fff5f7; border-left: 4px solid #d85a7f; padding: 14px; border-radius: 12px; margin-bottom: 16px; }
+        .q-num { font-size: 12px; font-weight: 700; color: #d85a7f; margin-bottom: 4px; }
+        .q-text { font-size: 17px; font-weight: 700; color: #3a2e30; line-height: 1.4; }
+        .options-grid { display: flex; flex-direction: column; gap: 10px; }
+        .opt-btn {
+            display: flex; align-items: center; background: #ffffff; border: 1.5px solid #f2d5db; color: #4a383b;
+            padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: left; line-height: 1.3;
+        }
+        .opt-btn:active { background: #fff0f3; border-color: #d85a7f; }
+        .opt-btn.correct { background: #e8f5e9 !important; border-color: #66bb6a !important; color: #2e7d32 !important; }
+        .opt-btn.wrong { background: #ffebee !important; border-color: #ef5350 !important; color: #c62828 !important; }
+        .explanation-box { background: #ffffff; border: 1px dashed #d85a7f; border-radius: 12px; padding: 12px; margin-top: 12px; }
+        .exp-title { font-size: 11px; font-weight: 700; color: #d85a7f; text-transform: uppercase; margin-bottom: 4px; }
+        .exp-grammar { font-size: 14px; font-weight: 700; color: #3a2e30; margin-bottom: 6px; }
+        .exp-trans { font-size: 13px; color: #555; line-height: 1.4; }
+        .feedback { display: none; margin-top: 14px; }
+        .next-btn {
+            display: block; width: 100%; margin-top: 12px; background: linear-gradient(135deg, #e07a9e 0%, #d85a7f 100%);
+            color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="sakura-container" id="sakura-box"></div>
+    <div class="app-card">
+        <div class="main-title">🌸 SHINKANZEN - まとめ問題 (1課〜12課)</div>
+        <div class="header">
+            <span id="q-count">Câu 1 / 13</span>
+            <span id="score-count">Điểm: 0</span>
+        </div>
+        <div class="question-card">
+            <div class="q-num" id="q-num">Câu 1</div>
+            <div class="q-text" id="q-text"></div>
+        </div>
+        <div class="options-grid" id="options-box"></div>
+        <div class="feedback" id="feedback">
+            <div id="result-status" style="font-weight: 700; text-align: center; font-size: 15px; margin-bottom: 10px;"></div>
+            <div class="explanation-box">
+                <div class="exp-title">📌 Công thức & Ngữ pháp:</div>
+                <div class="exp-grammar" id="exp-grammar"></div>
+                <div class="exp-title">🌸 Dịch nghĩa câu:</div>
+                <div class="exp-trans" id="exp-trans"></div>
+            </div>
+            <button class="next-btn" onclick="nextQuestion()">Câu tiếp theo ➔</button>
+        </div>
+    </div>
+    <script>
+        function createPetal() {
+            const box = document.getElementById('sakura-box');
+            if(!box) return;
+            const p = document.createElement('div');
+            p.classList.add('petal');
+            p.style.width = Math.random() * 6 + 6 + 'px';
+            p.style.height = Math.random() * 8 + 8 + 'px';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDuration = Math.random() * 3 + 5 + 's';
+            box.appendChild(p);
+            setTimeout(() => p.remove(), 8000);
+        }
+        setInterval(createPetal, 500);
+
+        const quizData = [
+            {
+                id: 1,
+                text: "課長、今度の工場見学にはわたしもいっしょに（ ）んですが、いいでしょうか。",
+                options: ["1. 行ってほしい", "2. 行っていただきたい", "3. 行かせたい", "4. 行かせていただきたい"],
+                correct: 3,
+                grammar: "V-させていただきたい (Xin phép cho bản thân mình được thực hiện hành động - Khiêm nhường ngữ lịch sự)",
+                trans: "Thưa Quản lý, trong chuyến tham quan nhà máy sắp tới, em cũng xin phép được đi cùng có được không ạ?"
+            },
+            {
+                id: 2,
+                text: "日本語をたくさん話したいから、教室では自分の国の言葉を（ ）。",
+                options: ["1. 使うとは限らない", "2. 使わないようにしている", "3. 使うことではない", "4. 使わないわけではない"],
+                correct: 1,
+                grammar: "V-ない + ようにしている (Cố gắng duy trì việc không làm gì - Thói quen/Nỗ lực bản thân)",
+                trans: "Vì muốn nói tiếng Nhật nhiều hơn nên ở phòng học tôi cố gắng không dùng tiếng mẹ đẻ."
+            },
+            {
+                id: 3,
+                text: "5時ごろ空港から電話があったのだから、そろそろ家に着く（ ）だ。",
+                options: ["1. ばかり", "2. つもり", "3. はず", "4. べき"],
+                correct: 2,
+                grammar: "V-る + はずだ (Chắc chắn là... - Phán đoán có căn cứ thực tế)",
+                trans: "Vì khoảng 5 giờ đã có cuộc gọi từ sân bay nên có lẽ giờ này chắc chắn sắp về đến nhà rồi."
+            },
+            {
+                id: 4,
+                text: "【図書館で】あ、それは持ち出し禁止の資料ですので、（ ）。",
+                options: ["1. お借りできません", "2. お貸しできません", "3. お借りしません", "4. お貸しになりません"],
+                correct: 1,
+                grammar: "お + V(bỏ ます) + できません (Khiêm nhường ngữ/Thức lịch sự - Thư viện không thể cho mượn)",
+                trans: "【Ở thư viện】Ôi, đó là tài liệu cấm mang ra ngoài nên chúng tôi không thể cho quý khách mượn được ạ."
+            },
+            {
+                id: 5,
+                text: "A「すみません、ちょっとその辞書を（ ）。」 B「いいですよ。どうぞ。」",
+                options: ["1. 借りてもいいですか", "2. 借りたらどうですか", "3. 借りてほしいのですが", "4. 借りるといいですよ"],
+                correct: 0,
+                grammar: "V-てもいいですか (Xin phép thực hiện hành động: Tôi mượn... có được không?)",
+                trans: "A: 'Xin lỗi, tớ mượn cuốn từ điển đó một chút có được không?' - B: 'Được chứ, xin mời.'"
+            },
+            {
+                id: 6,
+                text: "先生「皆さん、この書類は大切なので、絶対に（ ）。わかりましたか。」",
+                options: ["1. なくすわけではありません", "2. なくさないべき", "3. なくすことはありません", "4. なくさないこと"],
+                correct: 3,
+                grammar: "V-ない + こと (Mệnh lệnh/Yêu cầu quy định nhắc nhở: Tuyệt đối không được làm mất)",
+                trans: "Thầy giáo: 'Mọi người, tài liệu này rất quan trọng nên tuyệt đối không được làm mất nhé. Các em đã rõ chưa?'"
+            },
+            {
+                id: 7,
+                text: "会社を（ ）、課長に呼び止められた。",
+                options: ["1. 出るようにしたら", "2. 出ている間", "3. 出ようとしたら", "4. 出ているうちに"],
+                correct: 2,
+                grammar: "V-ようとしたら (Đang lúc vừa định/chuẩn bị bước ra thì bị hành động khác can thiệp)",
+                trans: "Vừa định bước ra khỏi công ty thì tôi bị quản lý gọi giật lại."
+            },
+            {
+                id: 8,
+                text: "A「もしもし、田中ですが、これからお宅に（ ）よろしいですか。」 B「ええ、どうぞ。お待ちしています。」",
+                options: ["1. おいでになっても", "2. 伺っても", "3. いらっしゃっても", "4. お目にかかっても"],
+                correct: 1,
+                grammar: "伺う (Khiêm nhường ngữ của 行く/訪問する - Tôi đến nhà anh/chị có được không?)",
+                trans: "A: 'Alo, tôi là Tanaka đây ạ. Bây giờ tôi ghé qua nhà anh/chị có tiện không ạ?' - B: 'Vâng, xin mời anh cứ đến. Tôi đang đợi đây ạ.'"
+            },
+            {
+                id: 9,
+                text: "A「お宅のこうちゃん、薬飲まないの？」 B「そうなの。あの子、（ ）、いやがって口を開けないのよ。」",
+                options: ["1. 飲むことにしても", "2. 飲むつもりでも", "3. 飲ませたつもりでも", "4. 飲ませようとしても"],
+                correct: 3,
+                grammar: "V-させようとしても (Dù có cố ép/cho uống... - Thể sai khiến kết hợp thể ý định)",
+                trans: "A: 'Bé Kou nhà chị không chịu uống thuốc à?' - B: 'Đúng thế đấy. Đứa bé đó dù có cố dỗ/cho uống thuốc thế nào thì nó cũng ghét rồi ngậm chặt miệng lại không chịu mở ra.'"
+            },
+            {
+                id: 10,
+                text: "A「あした、柔道の試合に出るんです。」 B「そうですか。自分の力が（ ）。」",
+                options: ["1. 出せるといいですね", "2. 出せたらどうですか", "3. 出るといいですよ", "4. 出ればよかったですね"],
+                correct: 0,
+                grammar: "V- can/khả năng + といいですね (Cầu chúc/Mong rằng đối phương thể hiện được khả năng)",
+                trans: "A: 'Ngày mai em sẽ tham gia thi đấu Judo.' - B: 'Thế à? Mong rằng em có thể thể hiện tốt thực lực của bản thân nhé.'"
+            },
+            {
+                id: 11,
+                text: "店に入りたかったが、もう閉店時間だった。もっと早く来る（ ）だった。",
+                options: ["1. ほど", "2. はず", "3. こと", "4. べき"],
+                correct: 3,
+                grammar: "V-る + べきだった (Đáng lẽ ra nên... [Hối hận về hành động trong quá khứ])",
+                trans: "Tôi đã rất muốn vào quán nhưng đã đến giờ đóng cửa mất rồi. Đáng lẽ ra tôi nên đến sớm hơn."
+            },
+            {
+                id: 12,
+                text: "【美術館で】あの、お客様、どちらへ（ ）。この奥は関係者以外は入れませんが。",
+                options: ["1. 行かれますか", "2. 参りますか", "3. おられますか", "4. 見えますか"],
+                correct: 0,
+                grammar: "V-られます (Tôn kính ngữ dạng bị động - Quý khách đang đi đâu đấy ạ?)",
+                trans: "【Tại bảo tàng mỹ thuật】Xin lỗi quý khách, quý khách đang đi đâu đấy ạ? Phía bên trong này ngoài người có trách nhiệm ra thì không được vào đâu ạ."
+            },
+            {
+                id: 13,
+                text: "一度失敗しただけで（ ）よ。もう少しがんばって。",
+                options: ["1. あきらめたわけがない", "2. あきらめたはずがない", "3. あきらめるわけではない", "4. あきらめるべきではない"],
+                correct: 3,
+                grammar: "V-る + べきではない (Không nên... - Khuyên nhủ không nên bỏ cuộc)",
+                trans: "Mới thất bại chỉ một lần thì không nên bỏ cuộc đâu. Cố gắng thêm chút nữa đi."
+            }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+        let canInteract = true;
+
+        function loadQuestion() {
+            canInteract = true;
+            document.getElementById('feedback').style.display = 'none';
+            const item = quizData[currentIndex];
+
+            document.getElementById('q-count').innerText = `Câu ${currentIndex + 1} / ${quizData.length}`;
+            document.getElementById('score-count').innerText = `Điểm: ${score}`;
+            document.getElementById('q-num').innerText = `Câu ${item.id}`;
+            document.getElementById('q-text').innerText = item.text;
+
+            const optionsBox = document.getElementById('options-box');
+            optionsBox.innerHTML = '';
+
+            item.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, idx);
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(btn, selectedIdx) {
+            if(!canInteract) return;
+            canInteract = false;
+
+            const item = quizData[currentIndex];
+            const statusEl = document.getElementById('result-status');
+
+            if(selectedIdx + 1 === item.correct) {
+                btn.classList.add('correct');
+                score += 10;
+                statusEl.innerHTML = `<span style="color: #4caf50;">✓ 正解 (Chính xác!)</span>`;
+            } else {
+                btn.classList.add('wrong');
+                statusEl.innerHTML = `<span style="color: #ef5350;">✕ ざんねん (Đáp án đúng: ${item.options[item.correct - 1]})</span>`;
+            }
+
+            document.getElementById('exp-grammar').innerText = item.grammar;
+            document.getElementById('exp-trans').innerText = item.trans;
+            document.getElementById('score-count').innerText = `Điểm: ${score}`;
+            document.getElementById('feedback').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentIndex = (currentIndex + 1) % quizData.length;
+            loadQuestion();
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
